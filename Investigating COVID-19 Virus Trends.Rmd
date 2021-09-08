@@ -1,0 +1,116 @@
+---
+title: "Investigating COVID-19 Virus Trends"
+author: "Joshua Goldberg"
+date: "7/27/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(readr)
+library(tibble)
+```
+
+## Summary
+During this project I analyzed COVID-19 data metrics collected between January and June, 2020 to understand positive test result rates over time.
+Through this analysis, I discovered that the three countries with the greatest proportion of positive test results were the United Kingdom, United States of America and Turkey.
+
+## Goal
+The goal of this project is to identify which countries have had the greatest proportion of positive COVID-19 Test Results. In addition to the information from the Summary, I was able to analyze this information more to understand how COVID data results have changed over time.
+
+
+```{r Analysis, echo = TRUE, include = TRUE}
+
+#1/2 - Load in the Dataset
+covid_df <- read_csv("C:/Users/Goldbej6/Desktop/Learning/R/covid19.csv")
+
+#3 - Dimension of Dataframe
+dim(covid_df)
+
+#4 - Evaluating Column Names
+vector_cols <- colnames(covid_df)
+vector_cols
+vector_cols_class <- class(vector_cols)
+
+#5 - Viewing the data 
+data_head <- head(covid_df)
+
+#6 - Summary of dataset
+glimpse(covid_df)
+
+#7 - Filtering and Selecting Columns of Interest 
+covid_df_all_states <- covid_df %>% 
+  filter(Province_State == "All States") %>% 
+  select(-Province_State)
+
+#8 - Select specific columns
+covid_df_all_states_daily <- covid_df_all_states %>% 
+  select(Date, Country_Region, active, hospitalizedCurr, daily_tested, daily_positive)
+
+#9 - Country Daily Totals
+covid_df_all_states_daily_sum <- covid_df_all_states_daily %>% 
+  group_by(Country_Region) %>% 
+  summarize(tested = sum(daily_tested),
+            positive = sum(daily_positive),
+            active = sum(active),
+            hospitalized = sum(hospitalizedCurr)
+    ) %>% 
+  arrange(-tested)
+
+covid_df_all_states_daily_sum
+
+#10 - Top rows
+covid_top_10 <- covid_df_all_states_daily_sum %>% 
+  head(10)
+
+
+#11 - Create vectors
+countries <- covid_top_10$Country_Region
+tested_cases <- covid_top_10$tested
+positive_cases <- covid_top_10$positive
+active_cases <- covid_top_10$active
+hospitalized_cases <- covid_top_10$hospitalized
+
+#12 - renaming vectors
+names(tested_cases) <- countries
+names(positive_cases) <- countries
+names(active_cases) <- countries
+names(hospitalized_cases) <- countries
+
+#13 - Top proportion results
+posvstest <- positive_cases/tested_cases
+positive_tested_top_3 <- sort(posvstest)
+positive_tested_top_3 <- c("UK" = 0.113, "US" = 0.109, "Turkey" = 0.081)
+positive_tested_top_3
+
+
+#14 - Creating vectors
+united_kingdom <- c(0.11, 1473672, 166909, 0, 0)
+united_states <-  c(0.10, 17282363, 1877179, 0, 0)
+turkey <-  c(0.08, 2031192, 163941, 2980960, 0)
+
+covid_mat <- rbind(united_kingdom, united_states, turkey)
+colnames(covid_mat) <- c("Ratio", "tested", "positive", "active", "hospitalized")
+covid_mat
+
+#15 - Question variable
+question <- "Which countries have had the highest number of positive cases against the number of tests?"
+
+#16 - Answer variable
+answer <- c("Positive tested cases" = positive_tested_top_3)
+
+#17 - Answer List
+dataframe_list <-  list(covid_df, covid_df_all_states, covid_df_all_states_daily, covid_top_10)
+matrices_list <- list(covid_mat)
+vectors_list <- list(vector_cols, countries)
+data_structure_list <- list("dataframe" = dataframe_list, "matrix" = matrices_list, "vectors" = vectors_list)
+data_structure_list
+
+#18 - Combined List
+covid_analysis_list <- list(question, answer, data_structure_list)
+covid_analysis_list[[2]]
+
+```
+
